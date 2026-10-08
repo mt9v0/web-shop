@@ -65,6 +65,17 @@ function renderProducts() {
   `).join('');
 }
 
+function updateProductActions(productId) {
+    const card = productListEl.querySelector(`[data-add="${productId}"], [data-inc="${productId}"]`);
+  if (!card) return;
+  const cardEl = card.closest('.product-card');
+  if (!cardEl) return;
+
+  const product = findProduct(productId);
+  const inCart = getCartItem(productId);
+  const actionsEl = cardEl.querySelector('.product-card__actions');
+  actionsEl.innerHTML = renderProductActions(product, inCart);
+}
 function addToCart(productId) {
   const existingItem = cart.find((item) => item.id === productId);
 

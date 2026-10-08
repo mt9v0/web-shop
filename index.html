@@ -11,10 +11,6 @@
   <header class="header">
     <div class="container header__content">
       <h1 class="logo">
-        <svg class="logo__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M5 8h14l-1 12H6L5 8z"/>
-          <path d="M9 8V6a3 3 0 0 1 6 0v2"/>
-        </svg>
         <span>mt9v0</span>
       </h1>
       <button id="cart-toggle-btn" class="btn" type="button">
@@ -49,18 +45,22 @@
         <div class="form-group">
           <label for="first-name">Имя:</label>
           <input type="text" id="first-name" required placeholder="Роман">
+          <span class="form-error" data-error-for="first-name"></span>
         </div>
         <div class="form-group">
           <label for="last-name">Фамилия:</label>
           <input type="text" id="last-name" required placeholder="Ротенберг">
+          <span class="form-error" data-error-for="first-name"></span>
         </div>
         <div class="form-group">
           <label for="address">Адрес доставки:</label>
           <input type="text" id="address" required placeholder="г. Казань, ул. Марата, д. 15">
+          <span class="form-error" data-error-for="first-name"></span>
         </div>
         <div class="form-group">
           <label for="phone">Контактный номер телефона:</label>
           <input type="tel" id="phone" required placeholder="+7 (812) 666-00-52">
+          <span class="form-error" data-error-for="first-name"></span>
         </div>
         <button type="submit" class="btn btn--success">Создать заказ</button>
       </form>
