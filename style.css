@@ -51,7 +51,6 @@ img {
   text-transform: uppercase;
 }
 
-/* ===== ОСНОВА ===== */
 .main-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
