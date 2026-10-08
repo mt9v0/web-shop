@@ -1,15 +1,3 @@
-const products = [
-  { id: 1, title: 'Футболка MONEY TALKS',      price: 6700, img: 'images/1.jpeg' },
-  { id: 2, title: 'Футболка МАСТУР БАТЫР',     price: 1600, img: 'images/2.jpeg' },
-  { id: 3, title: 'Футболка Baddie',   price: 5200, img: 'images/3.jpeg' },
-  { id: 4, title: 'Футболка HELLO KITTY',              price: 2800, img: 'images/4.png' },
-  { id: 5, title: 'Футболка DEUTCH BRAT',          price: 4900, img: 'images/5.jpeg' },
-  { id: 6, title: 'Футболка GOLDEN RULES',              price: 2200, img: 'images/6.jpeg' },
-  { id: 7, title: 'Футболка БОЛЬШИЕ ДИСКИ',          price: 2420, img: 'images/7.png' },
-  { id: 8, title: 'Пикми Джерси',   price: 6900, img: 'images/8.png' },
-  { id: 9, title: 'Футболка CHECHNYA',   price: 5000, img: 'images/9.jpeg' }
-];
-
 const STORAGE_KEY = 'cart';
 let cart = loadCart();
 
@@ -27,6 +15,7 @@ const successMsg    = document.getElementById('order-success-msg');
 
 const formatPrice = (n) => n.toLocaleString('ru-RU');
 const findProduct = (id) => products.find((p) => p.id === id);
+const getCartItem = (id) => cart.find((i) => i.id === id);
 
 function loadCart() {
   try {
@@ -48,34 +37,104 @@ function init() {
   renderProducts();
   renderCart();
   setupEventListeners();
+  setupValidation();
 }
 
 function renderProducts() {
-  productListEl.innerHTML = products.map((product) => `
-    <article class="product-card">
-      <div class="product-card__media">
-        <img class="product-card__img" src="${product.img}" alt="${product.title}" loading="lazy">
-      </div>
-      <div class="product-card__info">
-        <h3 class="product-card__title">${product.title}</h3>
-        <p class="product-card__price">${formatPrice(product.price)} ₽</p>
-      </div>
-      <button class="btn" type="button" data-add="${product.id}">Добавить в корзину</button>
-    </article>
-  `).join('');
+  productListEl.replaceChildren();
+
+  products.forEach((product) => {
+    const card = document.createElement('article');
+    card.className = 'product-card';
+
+    const media = document.createElement('div');
+    media.className = 'product-card__media';
+
+    const img = document.createElement('img');
+    img.className = 'product-card__img';
+    img.src = product.img;
+    img.alt = product.title;
+    img.loading = 'lazy';
+
+    media.append(img);
+
+    const info = document.createElement('div');
+    info.className = 'product-card__info';
+
+    const title = document.createElement('h3');
+    title.className = 'product-card__title';
+    title.textContent = product.title;
+
+    const price = document.createElement('p');
+    price.className = 'product-card__price';
+    price.textContent = `${formatPrice(product.price)} ₽`;
+
+    info.append(title, price);
+
+    const actions = document.createElement('div');
+    actions.className = 'product-card__actions';
+
+    card.append(media, info, actions);
+    productListEl.append(card);
+
+    const inCart = getCartItem(product.id);
+    renderProductActionsInto(actions, product, inCart);
+  });
+}
+
+function renderProductActionsInto(container, product, inCart) {
+  container.replaceChildren();
+
+  if (!inCart) {
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.type = 'button';
+    btn.dataset.add = product.id;
+    btn.textContent = 'Добавить в корзину';
+    container.append(btn);
+    return;
+  }
+
+  const controls = document.createElement('div');
+  controls.className = 'qty-controls';
+
+  const dec = document.createElement('button');
+  dec.className = 'qty-controls__btn';
+  dec.type = 'button';
+  dec.dataset.dec = product.id;
+  dec.setAttribute('aria-label', 'Уменьшить количество');
+  dec.textContent = '−';
+
+  const value = document.createElement('span');
+  value.className = 'qty-controls__value';
+  value.textContent = inCart.count;
+
+  const inc = document.createElement('button');
+  inc.className = 'qty-controls__btn';
+  inc.type = 'button';
+  inc.dataset.inc = product.id;
+  inc.setAttribute('aria-label', 'Увеличить количество');
+  inc.textContent = '+';
+
+  controls.append(dec, value, inc);
+  container.append(controls);
 }
 
 function updateProductActions(productId) {
-    const card = productListEl.querySelector(`[data-add="${productId}"], [data-inc="${productId}"]`);
-  if (!card) return;
-  const cardEl = card.closest('.product-card');
+  const trigger = productListEl.querySelector(
+    `[data-add="${productId}"], [data-inc="${productId}"], [data-dec="${productId}"]`
+  );
+  if (!trigger) return;
+
+  const cardEl = trigger.closest('.product-card');
   if (!cardEl) return;
 
   const product = findProduct(productId);
-  const inCart = getCartItem(productId);
   const actionsEl = cardEl.querySelector('.product-card__actions');
-  actionsEl.innerHTML = renderProductActions(product, inCart);
+
+  renderProductActionsInto(actionsEl, product, getCartItem(productId));
 }
+
 function addToCart(productId) {
   const existingItem = cart.find((item) => item.id === productId);
 
@@ -87,6 +146,7 @@ function addToCart(productId) {
 
   saveCart();
   renderCart();
+  updateProductActions(productId);
 }
 
 function changeCount(productId, delta) {
@@ -101,6 +161,7 @@ function changeCount(productId, delta) {
 
   saveCart();
   renderCart();
+  updateProductActions(productId);
 }
 
 function removeFromCart(productId) {
@@ -110,8 +171,14 @@ function removeFromCart(productId) {
 }
 
 function renderCart() {
+  cartItemsEl.replaceChildren();
+
   if (cart.length === 0) {
-    cartItemsEl.innerHTML = '<p class="empty-msg">Корзина пуста</p>';
+    const empty = document.createElement('p');
+    empty.className = 'empty-msg';
+    empty.textContent = 'Корзина пуста';
+    cartItemsEl.append(empty);
+
     checkoutBtn.disabled = true;
     cartTotalEl.textContent = '0';
     cartCountEl.textContent = '0';
@@ -123,30 +190,61 @@ function renderCart() {
   let totalSum = 0;
   let totalCount = 0;
 
-  cartItemsEl.innerHTML = cart.map((item) => {
+  cart.forEach((item) => {
     const product = findProduct(item.id);
     const itemTotal = product.price * item.count;
     totalSum += itemTotal;
     totalCount += item.count;
 
-    return `
-      <div class="cart-item">
-        <div class="cart-item__info">
-          <div class="cart-item__name">${product.title}</div>
-          <div class="cart-item__price">${formatPrice(itemTotal)} ₽</div>
-        </div>
-        <div class="cart-item__controls">
-          <button class="cart-item__btn" type="button" data-dec="${item.id}" aria-label="Уменьшить количество">−</button>
-          <span class="cart-item__qty">${item.count}</span>
-          <button class="cart-item__btn" type="button" data-inc="${item.id}" aria-label="Увеличить количество">+</button>
-          <button class="cart-item__btn cart-item__remove" type="button" data-remove="${item.id}" aria-label="Удалить товар из корзины">×</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+    const row = document.createElement('div');
+    row.className = 'cart-item';
+
+    const info = document.createElement('div');
+    info.className = 'cart-item__info';
+
+    const name = document.createElement('div');
+    name.className = 'cart-item__name';
+    name.textContent = product.title;
+
+    const price = document.createElement('div');
+    price.className = 'cart-item__price';
+    price.textContent = `${formatPrice(itemTotal)} ₽`;
+
+    info.append(name, price);
+
+    const controls = document.createElement('div');
+    controls.className = 'cart-item__controls';
+
+    controls.append(
+      createCartBtn('−', 'Уменьшить количество', 'dec', item.id),
+      createCartQty(item.count),
+      createCartBtn('+', 'Увеличить количество', 'inc', item.id),
+      createCartBtn('×', 'Удалить товар', 'remove', item.id, 'cart-item__remove')
+    );
+
+    row.append(info, controls);
+    cartItemsEl.append(row);
+  });
 
   cartTotalEl.textContent = formatPrice(totalSum);
   cartCountEl.textContent = totalCount;
+}
+
+function createCartBtn(text, ariaLabel, dataKey, dataValue, extraClass = '') {
+  const btn = document.createElement('button');
+  btn.className = 'cart-item__btn' + (extraClass ? ' ' + extraClass : '');
+  btn.type = 'button';
+  btn.setAttribute('aria-label', ariaLabel);
+  btn.textContent = text;
+  btn.dataset[dataKey] = dataValue;
+  return btn;
+}
+
+function createCartQty(count) {
+  const qty = document.createElement('span');
+  qty.className = 'cart-item__qty';
+  qty.textContent = count;
+  return qty;
 }
 
 function openModal() {
@@ -197,7 +295,96 @@ function setupEventListeners() {
     cart = [];
     saveCart();
     renderCart();
+    renderProducts();
   });
+}
+
+const rules = {
+  'first-name': {
+    test: (v) => /^[A-Za-zА-Яа-яЁё\s-]{2,}$/.test(v),
+    message: 'Только буквы, минимум 2 символа'
+  },
+  'last-name': {
+    test: (v) => /^[A-Za-zА-Яа-яЁё\s-]{2,}$/.test(v),
+    message: 'Только буквы, минимум 2 символа'
+  },
+  address: {
+    test: (v) => v.trim().length >= 5,
+    message: 'Укажите адрес (минимум 5 символов)'
+  },
+  phone: {
+    test: (v) => /^[+]?[\d\s()-]{10,18}$/.test(v.trim()),
+    message: 'Только цифры и символы + ( ) -, минимум 10 цифр'
+  }
+};
+
+function setError(inputId, message) {
+  const input = document.getElementById(inputId);
+  const errorEl = orderForm.querySelector(`[data-error-for="${inputId}"]`);
+  if (!input || !errorEl) return;
+
+  if (message) {
+    input.classList.add('is-invalid');
+    errorEl.textContent = message;
+  } else {
+    input.classList.remove('is-invalid');
+    errorEl.textContent = '';
+  }
+}
+
+function clearAllErrors() {
+  Object.keys(rules).forEach((id) => setError(id, ''));
+}
+
+function validateField(inputId) {
+  const input = document.getElementById(inputId);
+  const rule = rules[inputId];
+  if (!input || !rule) return true;
+
+  const value = input.value.trim();
+
+  if (value === '') {
+    setError(inputId, 'Поле обязательно для заполнения');
+    return false;
+  }
+  if (!rule.test(value)) {
+    setError(inputId, rule.message);
+    return false;
+  }
+  setError(inputId, '');
+  return true;
+}
+
+function validateForm() {
+  let ok = true;
+  Object.keys(rules).forEach((id) => {
+    if (!validateField(id)) ok = false;
+  });
+  return ok;
+}
+
+function setupValidation() {
+  Object.keys(rules).forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+
+    input.addEventListener('blur', () => validateField(id));
+
+    input.addEventListener('input', () => {
+      if (input.classList.contains('is-invalid')) {
+        validateField(id);
+      }
+    });
+  });
+
+  const phoneInput = document.getElementById('phone');
+  if (phoneInput) {
+    phoneInput.addEventListener('beforeinput', (e) => {
+      if (e.data && /[^\d\s()+-]/.test(e.data)) {
+        e.preventDefault();
+      }
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
