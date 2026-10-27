@@ -288,7 +288,10 @@ function setupEventListeners() {
   orderForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
+    if (!validateForm()) return;
+
     orderForm.reset();
+    clearAllErrors();
     orderForm.classList.add('hidden');
     successMsg.classList.remove('hidden');
 
