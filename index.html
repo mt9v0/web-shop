@@ -12,7 +12,6 @@
     <div class="container header__content">
       <h1 class="logo">
         <img class="logo__icon" src="images/logo.jpg" alt="" width="36" height="36">
-        </svg>
         <span>mt9v0</span>
       </h1>
       <button id="cart-toggle-btn" class="btn" type="button">
@@ -43,7 +42,7 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <button id="modal-close-btn" class="modal__close" type="button" aria-label="Закрыть">&times;</button>
       <h3 id="modal-title" class="modal__title">Оформление заказа</h3>
-      <form id="order-form" class="order-form">
+      <form id="order-form" class="order-form" novalidate>
         <div class="form-group">
           <label for="first-name">Имя:</label>
           <input type="text" id="first-name" required placeholder="Роман">
@@ -52,17 +51,17 @@
         <div class="form-group">
           <label for="last-name">Фамилия:</label>
           <input type="text" id="last-name" required placeholder="Ротенберг">
-          <span class="form-error" data-error-for="first-name"></span>
+          <span class="form-error" data-error-for="last-name"></span>
         </div>
         <div class="form-group">
           <label for="address">Адрес доставки:</label>
           <input type="text" id="address" required placeholder="г. Казань, ул. Марата, д. 15">
-          <span class="form-error" data-error-for="first-name"></span>
+          <span class="form-error" data-error-for="address"></span>
         </div>
         <div class="form-group">
           <label for="phone">Контактный номер телефона:</label>
           <input type="tel" id="phone" required placeholder="+7 (812) 666-00-52">
-          <span class="form-error" data-error-for="first-name"></span>
+          <span class="form-error" data-error-for="phone"></span>
         </div>
         <button type="submit" class="btn btn--success">Создать заказ</button>
       </form>
